@@ -23,7 +23,7 @@ services:
     volumes:
       - ./mongodb_data:/data/db
 
-  web:
+  server:
     build: ./backend
     user: "node:node"
     environment:

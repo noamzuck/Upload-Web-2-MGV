@@ -8,9 +8,9 @@
     "node-exiftool": "^2.3.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "npm install && node server.js"
   },
-  "name": "uploading-files-mgv",
+  "name": "backend",
   "version": "1.0.0",
   "main": "server.js",
   "devDependencies": {},
