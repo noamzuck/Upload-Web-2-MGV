@@ -263,9 +263,9 @@ async function getStats() {
         new Chart("statsDivOne", {
           type: "line",
           data: {
-            labels: json[1].map(item => (item.time / 1000)),
+            labels: json[1].map(item => (item.time / 1000).toFixed(3)),
             datasets: [{ 
-              data: json[1].map(item => (item.size / 1024 / 1024)),
+              data: json[1].map(item => (item.size / 1024 / 1024).toFixed(2)),
               borderColor: "#12372A",
               fill: false
             }]
