@@ -232,19 +232,6 @@ async function uploadFile(name, buffer, metaData, id) {
 async function createTheMainBucket(id) {
     return await minioClient.makeBucket(id, async (err) => {
         if(err) return err;
-        const policy = JSON.stringify({
-            "Version" : "2012-10-17",
-            Statement: [{
-              Sid: 'AddPerm',
-              Effect: 'Allow',
-              Principal: '*',
-              Action: ['s3:GetObject'],
-              Resource: [`arn:aws:s3:::${id}/*`]
-            }]
-        });
-        return await minioClient.setBucketPolicy(id, policy, function(err) {
-            if (err) return console.log('Error setting bucket policy:', err);
-            return 'Bucket policy set successfully';
-        });
+        return 'Bucket set successfully';
     });
 } //A function to create the user's bucket
