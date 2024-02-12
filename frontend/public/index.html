@@ -67,7 +67,7 @@
           <p id="shareTitle" class="shareTitle"></p>
           <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 5vh;">
             <input id="shareLinkInput" type="text" class="shareLinkInput" disabled>
-            <button class="copyLinkBtn" onclick="navigator.clipboard.writeText(globalFileLink)">
+            <button class="copyLinkBtn" onclick="if(navigator.clipboard) navigator.clipboard.writeText(globalFileLink); else alert('Does not support localhost :/')">
               Copy<i class='fa-solid fa-copy' style='margin: 0 0.25vw;'></i>
             </button>
           </div>
