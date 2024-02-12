@@ -7,7 +7,7 @@ const exiftool  = require('node-exiftool'); //The package of the metadata
 const exiftoolBin = require('dist-exiftool'); //The package of the metadata
 const fs = require('fs'); //The package that reads files
 
-const mongoUrl = 'mongodb://admin:password@mongodb:27017'; //The url of the database
+const mongoUrl = 'mongodb://mongodb:27017'; //The url of the database
 
 const storage = multer.memoryStorage(); //Where to store the files temporarily
 const upload = multer({ storage: storage });
@@ -116,7 +116,7 @@ app.get('/statistics', async (req, res) => {
         })
         .catch(() => res.status(500).send('Internal Server Error'));
     })
-    .catch(error => res.send('Error connecting to MongoDB', error));
+    .catch(error => res.send('Error connecting to MongoDB: ' + error));
 }); //Sends the statistics data
 
 app.get('/getLink', async (req, res) => {
@@ -148,7 +148,7 @@ app.get('/getUser', async (req, res) => {
         })
         .catch(() => res.status(500).send('Internal Server Error'));
     })
-    .catch(error => res.send('Error connecting to MongoDB', error));
+    .catch(error => res.send('Error connecting to MongoDB: ' + error));
 }); //Sends the user information
 
 app.get('/createAccount', async (req, res) => {
@@ -159,11 +159,11 @@ app.get('/createAccount', async (req, res) => {
 
         const newUser = await collection.insertOne({ files: [], stats: { 1: [], 2: {}, 3: {} } });
 
-        await createTheMainBucket(newUser._id);
+        await createTheMainBucket(String(newUser.insertedId).replace("new ObjectId('", '').replace("')", ''));
 
         res.json(newUser);
     })
-    .catch(error => res.send('Error connecting to MongoDB', error));
+    .catch(error => res.send('Error connecting to MongoDB: ' + error));
 }); //Creates a new user account
 
 app.get('/addStat', async (req, res) => {
@@ -187,7 +187,7 @@ app.get('/addStat', async (req, res) => {
         .then(() => res.send('Stat added successfully'))
         .catch((err) => res.status(500).send('Internal Server Error' + err));
     })
-    .catch(error => res.send('Error connecting to MongoDB', error));
+    .catch(error => res.send('Error connecting to MongoDB: ' + error));
 }); //Adds data to a user's statistics 
 
 app.listen(3000, () => {
@@ -239,6 +239,7 @@ async function createTheMainBucket(id) {
     return await minioClient.makeBucket(id, async (err) => {
         if(err) return err;
         const policy = JSON.stringify({
+            "Version" : "2012-10-17",
             Statement: [{
               Sid: 'AddPerm',
               Effect: 'Allow',
@@ -247,7 +248,7 @@ async function createTheMainBucket(id) {
               Resource: [`arn:aws:s3:::${id}/*`]
             }]
         });
-        return await minioClient.setBucketPolicy(bucketName, policy, function(err) {
+        return await minioClient.setBucketPolicy(id, policy, function(err) {
             if (err) return console.log('Error setting bucket policy:', err);
             return 'Bucket policy set successfully';
         });
