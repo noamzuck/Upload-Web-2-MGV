@@ -57,7 +57,7 @@ app.post('/file', upload.single('file'), async (req, res) => {
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
 
-    const result = await minioClient.bucketExists(id)
+    /*const result = await minioClient.bucketExists(id)
     .then(async exists => {
         if(exists) return await uploadFile(file.originalname, file.buffer, metaData, id);
         else return await createTheMainBucket(id)
@@ -65,7 +65,8 @@ app.post('/file', upload.single('file'), async (req, res) => {
             return await uploadFile(file.originalname, file.buffer, metaData, id);
         });
     })
-    .catch(err => err);
+    .catch(err => err);*/
+    const result = await uploadFile(file.originalname, file.buffer, metaData, id);
     
     if(result == "File already exists") res.status(400).send(result);
     else res.send('Ok: ' + result);
@@ -156,7 +157,11 @@ app.get('/createAccount', async (req, res) => {
         const db = await client.db('UploadFilesMGV');
         const collection = await db.collection('users');
 
-        res.json(await collection.insertOne({ files: [], stats: { 1: [], 2: {}, 3: {} } }));
+        const newUser = await collection.insertOne({ files: [], stats: { 1: [], 2: {}, 3: {} } });
+
+        await createTheMainBucket(newUser._id);
+
+        res.json(newUser);
     })
     .catch(error => res.send('Error connecting to MongoDB', error));
 }); //Creates a new user account
@@ -231,8 +236,20 @@ async function uploadFile(name, buffer, metaData, id) {
 } //A function to upload a file
 
 async function createTheMainBucket(id) {
-    return await minioClient.makeBucket(id, (err, etag) => {
+    return await minioClient.makeBucket(id, async (err) => {
         if(err) return err;
-        return etag;
+        const policy = JSON.stringify({
+            Statement: [{
+              Sid: 'AddPerm',
+              Effect: 'Allow',
+              Principal: '*',
+              Action: ['s3:GetObject'],
+              Resource: [`arn:aws:s3:::${id}/*`]
+            }]
+        });
+        return await minioClient.setBucketPolicy(bucketName, policy, function(err) {
+            if (err) return console.log('Error setting bucket policy:', err);
+            return 'Bucket policy set successfully';
+        });
     });
 } //A function to create the user's bucket
