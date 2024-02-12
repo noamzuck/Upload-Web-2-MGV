@@ -11,6 +11,7 @@ const mongoUrl = 'mongodb://mongodb:27017'; //The url of the database
 
 const storage = multer.memoryStorage(); //Where to store the files temporarily
 const upload = multer({ storage: storage });
+const port = 3000;
 const app = express(); //Starts the server process
 
 const minioClient = new Minio.Client({
@@ -26,6 +27,8 @@ app.use('/src', express.static(path.join(__dirname + '/../frontend/src'))); //gi
 app.get('/manifest.json', function (req, res) {
     res.sendFile(path.join(__dirname + '/../frontend/public/manifest.json'));
 }); //Gives you access to the "manifest.json" file
+
+app.get('/port', (req, res) => res.json({ port: port })); //Gives the port
 
 app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname + '/../frontend/public/index.html'));
@@ -57,15 +60,6 @@ app.post('/file', upload.single('file'), async (req, res) => {
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
 
-    /*const result = await minioClient.bucketExists(id)
-    .then(async exists => {
-        if(exists) return await uploadFile(file.originalname, file.buffer, metaData, id);
-        else return await createTheMainBucket(id)
-        .then(async () => {
-            return await uploadFile(file.originalname, file.buffer, metaData, id);
-        });
-    })
-    .catch(err => err);*/
     const result = await uploadFile(file.originalname, file.buffer, metaData, id);
     
     if(result == "File already exists") res.status(400).send(result);
@@ -119,15 +113,15 @@ app.get('/statistics', async (req, res) => {
     .catch(error => res.send('Error connecting to MongoDB: ' + error));
 }); //Sends the statistics data
 
-app.get('/getLink', async (req, res) => {
-    const { id, file } = req.query;
+app.get('/getFile/:id/:file', async (req, res) => {
+    const { id, file } = req.params;
     if(!id || !file) return res.status(400).send('Not enough data provided.');
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
     
-    await minioClient.presignedGetObject(id, file, 604800)
-    .then((url) => res.json({ link: url }))
-    .catch((err) => res.status(500).send('Internal Server Error' + err));
+    await minioClient.getObject(id, file)
+    .then((stream) => stream.pipe(res))
+    .catch((err) => res.status(500).send('Error downloading file: ' + err));
 }); //Sends the link to download the file
 
 app.get('/getUser', async (req, res) => {
@@ -190,9 +184,9 @@ app.get('/addStat', async (req, res) => {
     .catch(error => res.send('Error connecting to MongoDB: ' + error));
 }); //Adds data to a user's statistics 
 
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
-}); //Runs the server on port 3000
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+}); //Runs the server on port ${port}
 
 
 /***********/

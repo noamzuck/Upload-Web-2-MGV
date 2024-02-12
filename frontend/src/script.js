@@ -1,5 +1,8 @@
 let uploaded = 0, uploading = 0, failedUps = 0; //The variables for the upload process
-let UploadFilesMGVId, globalFile, globalFileLink; //The global variables
+let UploadFilesMGVId, globalFile, globalFileLink, port; //The global variables
+(async () => {
+  await fetch('/port').then(res => res.json()).then(json => port = json.port);
+})();
 
 window.addEventListener('load', async () => {
     if(await localStorage.getItem('UploadFilesMGVId') == null) {
@@ -236,12 +239,8 @@ async function deleteFile(file, itemId) {
 
 async function shareFile(file) {
   if(globalFile != file) {
-    await fetch(`/getLink?id=${UploadFilesMGVId}&file=${file}`)
-    .then(res => res.json())
-    .then(async json => {
-      globalFile = file;
-      globalFileLink = json.link;
-    });
+    globalFile = file;
+    globalFileLink = `${document.location.href.split(port)[0]}${port}/getFile/${UploadFilesMGVId}/${file}`;
   }
   document.getElementById('shareTitle').innerHTML = globalFile;
   document.getElementById('shareLinkInput').value = globalFileLink;
