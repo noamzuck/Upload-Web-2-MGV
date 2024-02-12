@@ -42,11 +42,13 @@ app.post('/file', upload.single('file'), async (req, res) => {
     const file = req.file, id = req.body.id;
     if(!id || !file) return res.status(400).send('Not enough data provided.');
 
-    await fs.writeFileSync(path.join(__dirname + "/tmp/", file.originalname), file.buffer);
+    const finalName = encodeURIComponent(file.originalname).replaceAll('%20', ' '); //Encodes the file name
+
+    await fs.writeFileSync(path.join(__dirname + "/tmp/", finalName), file.buffer);
 
     const ep = new exiftool.ExiftoolProcess(exiftoolBin)
     await ep.open().then(() => 'Exiftool started').catch(err => 'Error starting exiftool: ' +  err);
-    let metaData = await ep.readMetadata("../tmp/" + file.originalname, ['-File:all']);
+    let metaData = await ep.readMetadata("../tmp/" + finalName, ['-File:all']);
     metaData = (metaData.data == null) ? {} : metaData.data[0];
     for(let item in metaData) {
         if(/[^\x00-\x7F]/.test(item) || /[^\x00-\x7F]/.test(metaData[item]) || item.includes('-')) delete metaData[item];
@@ -56,11 +58,11 @@ app.post('/file', upload.single('file'), async (req, res) => {
 
     metaData = Object.fromEntries(Object.entries(metaData).slice(0, 20));
 
-    await fs.unlinkSync(path.join(__dirname + "/tmp/", file.originalname));
+    await fs.unlinkSync(path.join(__dirname + "/tmp/", finalName));
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
 
-    const result = await uploadFile(file.originalname, file.buffer, metaData, id);
+    const result = await uploadFile(finalName, file.buffer, metaData, id);
     
     if(result == "File already exists") res.status(400).send(result);
     else res.send('Ok: ' + result);
@@ -74,7 +76,9 @@ app.delete('/filename/:file/:id', async (req, res) => {
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
     else newId = new ObjectId(id);
 
-    await minioClient.removeObjects(id, [file])
+    const finalName = encodeURIComponent(file).replaceAll('%20', ' ');
+
+    await minioClient.removeObjects(id, [finalName])
     .catch(err => res.send(err));
 
     await MongoClient.connect(mongoUrl)
@@ -82,7 +86,7 @@ app.delete('/filename/:file/:id', async (req, res) => {
         const db = await client.db('UploadFilesMGV');
         collection = await db.collection('users');
 
-        collection.findOneAndUpdate({ _id: new ObjectId(id) }, { $pull: { files: file } })
+        collection.findOneAndUpdate({ _id: new ObjectId(id) }, { $pull: { files: finalName } })
         .catch(() => 'Internal Server Error');
     })
     .catch(() => 'Error connecting to MongoDB');
@@ -118,8 +122,10 @@ app.get('/getFile/:id/:file', async (req, res) => {
     if(!id || !file) return res.status(400).send('Not enough data provided.');
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
+
+    const finalName = encodeURIComponent(file).replaceAll('%20', ' ');
     
-    await minioClient.getObject(id, file)
+    await minioClient.getObject(id, finalName)
     .then((stream) => stream.pipe(res))
     .catch((err) => res.status(500).send('Error downloading file: ' + err));
 }); //Sends the link to download the file
