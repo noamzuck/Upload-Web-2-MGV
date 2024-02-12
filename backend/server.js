@@ -62,7 +62,7 @@ app.post('/file', upload.single('file'), async (req, res) => {
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
 
-    const result = await uploadFile(finalName, file.buffer, metaData, id);
+    const result = await uploadFile(finalName, file.buffer, metaData, id, file.originalname);
     
     if(result == "File already exists") res.status(400).send(result);
     else res.send('Ok: ' + result);
@@ -86,7 +86,7 @@ app.delete('/filename/:file/:id', async (req, res) => {
         const db = await client.db('UploadFilesMGV');
         collection = await db.collection('users');
 
-        collection.findOneAndUpdate({ _id: new ObjectId(id) }, { $pull: { files: finalName } })
+        collection.findOneAndUpdate({ _id: new ObjectId(id) }, { $pull: { files: file } })
         .catch(() => 'Internal Server Error');
     })
     .catch(() => 'Error connecting to MongoDB');
@@ -199,7 +199,7 @@ app.listen(port, () => {
 /*FUNCTIONS*/
 /***********/
 
-async function uploadFile(name, buffer, metaData, id) {
+async function uploadFile(name, buffer, metaData, id, originalname) {
     return await MongoClient.connect(mongoUrl)
     .then(async client => {
         const db = await client.db('UploadFilesMGV');
@@ -216,7 +216,7 @@ async function uploadFile(name, buffer, metaData, id) {
                         if (result) {
                             result._id = new ObjectId(id);
                             const tmp = { $set: JSON.parse(JSON.stringify(result)) };
-                            tmp.$set.files.push(name);
+                            tmp.$set.files.push(originalname);
                             delete tmp.$set._id;
                             return await collection.updateOne(result, tmp)
                             .then(resultUpdate => {
