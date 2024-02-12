@@ -24,8 +24,7 @@ services:
       - ./mongodb_data:/data/db
 
   web:
-    build: 
-      context: ./backend
+    build: ./backend
     user: "node:node"
     environment:
       - APP_PORT=${APP_PORT:-3000}
