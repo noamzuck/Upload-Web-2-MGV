@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <link rel="icon" href="../src/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="Statistics Page - MGV"
+      content="Site for uploading files for a Magav assignment."
+    />
+    <link rel="apple-touch-icon" href="../src/apple-touch-icon.png" />
+
+    <link rel="manifest" href="manifest.json"/>
+    
+    <title>Statistics Page || MGV</title>
+    <script src="https://kit.fontawesome.com/0fce542201.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <link rel="stylesheet" type="text/css" href="../src/styleStats.css">
+  </head>
+  <body>
+    <div class="titleDiv">
+        <p class="title">Statistics</p>
+        <a href="/" style="text-decoration: none;">
+            <button class="uploadBtn">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+            </button>
+        </a>
+    </div>
+
+    <div class="statsDiv">
+        <div class="statsItem">
+          <canvas id="statsDivOne" class="graph"></canvas>
+        </div>
+
+        <div class="statsItem">
+          <canvas id="statsDivTwo" class="graph"></canvas>
+        </div>
+
+        <div class="statsItem">
+          <canvas id="statsDivThree" class="graph"></canvas>
+        </div>
+
+    </div>
+  </body>
+  <script src="../src/script.js"></script>
+</html>

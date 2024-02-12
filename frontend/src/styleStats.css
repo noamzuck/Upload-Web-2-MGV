@@ -1,0 +1,105 @@
+:root {
+    --a: #12372A;
+    --b: #436850;
+    --c: #ADBC9F;
+    --d: #FBFADA;
+    --do: #fbfada85;
+}
+/*https://colorhunt.co/palette/12372a436850adbc9ffbfada*/
+
+* {
+    font-family: Arial, Helvetica, sans-serif;
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+*::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
+
+body {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: var(--b);
+    overflow: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+.titleDiv {
+    width: 100%;
+    height: 17%;
+    border-radius: 0 0 8vh 8vh;
+    background-color: white;
+    background-color: var(--d);
+    display: flex;
+    align-items: end;
+    position: absolute;
+    top: 0;
+}
+
+.title {
+    width: 100%;
+    font-size: 7vh;
+    font-weight: bolder;
+    color: var(--b);
+    margin: 2.5vh 0;
+    margin-left: 5vw;
+}
+
+.uploadBtn {
+    height: 5vh;
+    width: 5vh;
+    padding: 3vh 3vh;
+    margin: 2.5vh 0;
+    margin-right: 2vw;
+    outline: none;
+    border: none;
+    border-radius: 5vh;
+    text-align: center;
+    font-size: 3vh;
+    background-color: var(--b);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 0 0 2vh var(--c);
+    filter: drop-shadow(0 0 1.5vh rgba(0, 0, 0, 0.75));
+    transition-duration: 0.5s;
+}
+
+.uploadBtn:hover {
+    background-color: var(--d);
+    filter: drop-shadow(0 0 1.5vh var(--do));
+    color: var(--a);
+}
+
+.statsDiv {
+    width: 90%;
+    height: 70%;
+    margin-top: 15vh;
+    border-radius: 5vh;
+    display: flex;
+    overflow: hidden;
+    filter: drop-shadow(0 0 4vh rgba(0, 0, 0, 0.5));
+}
+
+.statsItem {
+    width: 100%;
+    background-color: var(--c);
+    filter: drop-shadow(-2vh 0 1vh rgba(0, 0, 0, 0.35));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.graph {
+    width: 100%;
+}

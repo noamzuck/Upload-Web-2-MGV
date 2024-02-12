@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "dist-exiftool": "^10.53.0",
+    "express": "^4.18.2",
+    "minio": "^7.1.3",
+    "mongodb": "^6.3.0",
+    "multer": "^1.4.5-lts.1",
+    "node-exiftool": "^2.3.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "uploading-files-mgv",
+  "version": "1.0.0",
+  "main": "server.js",
+  "devDependencies": {},
+  "keywords": [],
+  "author": "Noam Zuck",
+  "license": "ISC",
+  "description": ""
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <link rel="icon" href="../src/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="Uploading Files - MGV"
+      content="Site for uploading files for a Magav assignment."
+    />
+    <link rel="apple-touch-icon" href="../src/apple-touch-icon.png" />
+
+    <link rel="manifest" href="manifest.json"/>
+    
+    <title>Uploading Files || MGV</title>
+    <script src="https://kit.fontawesome.com/0fce542201.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="../src/style.css">
+  </head>
+  <body>
+    <div class="mainDiv">
+      <div class="dragDiv" ondragover="drag(event)" ondrop="drop(event)" ondragleave="cancelDraging(event)" onclick="document.getElementById('inputFiles').click()">
+          <img class="dragImg" src="../src/dargAndDrop.png">
+          <p class="dragP">Drag and drop files to upload them to the system</p>
+      </div>
+
+      <input type="file" name="files" id="inputFiles" onchange="uploadFiles(event.target.files)" multiple hidden>
+      <button class="browseBtn" onclick="document.getElementById('inputFiles').click()">Browse</button>
+    </div>
+
+    <div class="menuDiv">
+      <div style="height: 90%; display: flex; justify-content: center; flex-direction: column; position: relative;">
+        <div class="arrowBtn" onclick="menu()" onmouseenter="toggleIcon()" onmouseleave="toggleIcon()">
+          <i id="arrowI" class="fa-solid fa-angle-left arrowIcon"></i>
+  
+          <button id="uploadHistory" class="uploadHistory">0</button>
+        </div>
+  
+        <div class="statsBtn">
+          <a href="/stats" style="text-decoration: none;">
+            <i class="fa-solid fa-chart-line statsIcon"></i>
+          </a>
+        </div>
+      </div>
+
+      <div id="sideUploads" class="sideUploadsDiv sideUploadsDivLeave">
+        <div class="titleDiv">
+          <p style="font-weight: bolder; font-size: 4vh; margin: 0; width: 20vw;">Uploads</p>
+          <p id="filesStatusMenu" style="font-size: 2vh; margin: 0.5vh 0; width: 20vw;">Uploaded files: 0 || Uploading: 0 || Failed: 0</p>
+        </div>
+
+        <div class="uploadsItems">
+          <div id="uploadingDiv" class="uploadingDiv"></div>
+          <div id="doneDiv" class="doneDiv" style="border: none;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="shareBox" class="shareBox shareBoxOut">
+      <p class="shareMainTitle">Share your file</p>
+      <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+        <button class="shareCircle" onclick="shareFileAction()">
+          <i class="fa-solid fa-share"></i>
+        </button>
+
+        <div style="width: 100%;">
+          <p id="shareTitle" class="shareTitle"></p>
+          <div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 5vh;">
+            <input id="shareLinkInput" type="text" class="shareLinkInput" disabled>
+            <button class="copyLinkBtn" onclick="navigator.clipboard.writeText(globalFileLink)">
+              Copy<i class='fa-solid fa-copy' style='margin: 0 0.25vw;'></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="shareCloseBtn" onclick="document.getElementById('shareBox').classList.toggle('shareBoxOut');">Close<i class="fa-solid fa-xmark" style="margin: 0 0.25vw;"></i></button>
+    </div>
+
+  </body>
+  <script src="../src/script.js"></script>
+</html>
