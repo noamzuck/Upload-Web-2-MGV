@@ -26,7 +26,7 @@ window.addEventListener('load', async () => {
             //Updates the progress of the uploads
 
             const time = Date.now();
-            const encodeId = encodeURIComponent(file).replaceAll(/[^a-zA-Z0-9]/g, '');
+            const encodeId = encodeURIComponent(file.replaceAll(/[^a-zA-Z0-9]/g, ''));
             const uploadItem = document.createElement('div');
             uploadItem.id = encodeId + time + 'Item';
             uploadItem.classList.add('uploadItem');
@@ -35,19 +35,21 @@ window.addEventListener('load', async () => {
                 <button class='uploadCancelBtn' style='background-color: var(--b); cursor: default;'>\
                     <i class='fa-solid fa-check'></i>\
                 </button>\
-                <p class='uploadTitleItem'>${file}</p>\
+                <p class='uploadTitleItem'>${decodeURIComponent(file)}</p>\
                 <div class='uploadBtnsDiv'>\
-                  <button class='uploadDeleteAndShareBtn deleteBtnFix' onclick="deleteFile('${file}', '${encodeId + time + 'Item'}')">\
+                  <button id='${time}Delete' class='uploadDeleteAndShareBtn deleteBtnFix'>\
                       Delete file
                       <i class="fa fa-trash" style='margin: 0 0.5vw;'></i>
                   </button>\
-                  <button class='uploadDeleteAndShareBtn shareBtnFix' onclick="shareFile('${file}')">\
+                  <button id='${time}Share' class='uploadDeleteAndShareBtn shareBtnFix'>\
                       Share file
                       <i class="fa-solid fa-share" style='margin: 0 0.5vw;'></i>
                   </button>\
                 </div>\
             `;
             uploadItem.innerHTML = insideUploadItem;
+            document.getElementById(`${time}Delete`).onclick = () => deleteFile(file, encodeId + time + 'Item');
+            document.getElementById(`${time}Share`).onclick = () => shareFile(file, file);
         }//Creates an item for each file
     })
     .catch(async err => {
@@ -109,7 +111,7 @@ async function uploadFiles(files) {
 
         //Creates a new item in the menu
         const time = Date.now();
-        const encodeId = encodeURIComponent(file.name).replaceAll(/[^a-zA-Z0-9]/g, '');
+        const encodeId = encodeURIComponent((file.name).replaceAll(/[^a-zA-Z0-9]/g, ''));
         const uploadItem = document.createElement('div');
         uploadItem.id = encodeId + time + 'Item';
         uploadItem.classList.add('uploadItem');
@@ -137,7 +139,7 @@ async function uploadFiles(files) {
         const startTime = performance.now();
 
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', file, encodeURIComponent(file.name));
         formData.append('id', UploadFilesMGVId);
         const xhr = new window.XMLHttpRequest();
 
@@ -167,15 +169,17 @@ async function uploadFiles(files) {
               const uploadBtnsDiv = document.createElement('div');
               uploadBtnsDiv.classList.add('uploadBtnsDiv');
               uploadBtnsDiv.innerHTML = `\
-                <button class='uploadDeleteAndShareBtn deleteBtnFix' onclick="deleteFile('${file.name}', '${encodeId + time + 'Item'}')">\
+                <button id='${time}Delete' class='uploadDeleteAndShareBtn deleteBtnFix'>\
                     Delete file
                     <i class="fa fa-trash" style='margin: 0 0.5vw;'></i>
                 </button>\
-                <button class='uploadDeleteAndShareBtn shareBtnFix' onclick="shareFile('${file.name}')">\
+                <button id='${time}Share' class='uploadDeleteAndShareBtn shareBtnFix'>\
                     Share file
                     <i class="fa-solid fa-share" style='margin: 0 0.5vw;'></i>
                 </button>`;
               document.getElementById(encodeId + time + 'Item').appendChild(uploadBtnsDiv);
+              document.getElementById(`${time}Delete`).onclick = () => deleteFile(response, encodeId + time + 'Item');
+              document.getElementById(`${time}Share`).onclick = () => shareFile(file.name, response);
   
               //Updates some data in the item
               document.getElementById(encodeId + time + 'Btn').innerHTML = "<i class='fa-solid fa-check'></i>";
@@ -247,10 +251,10 @@ async function deleteFile(file, itemId) {
 }
 
 //The function that is called when the user clicks on the sharing button
-async function shareFile(file) {
+async function shareFile(file, encodeFile) {
   if(globalFile != file) {
-    globalFile = file;
-    globalFileLink = `${document.location.href.split(port)[0]}${port}/getFile/${UploadFilesMGVId}/${file}`;
+    globalFile = decodeURIComponent(file);
+    globalFileLink = `${document.location.href.split(port)[0]}${port}/getFile/${UploadFilesMGVId}/${encodeFile}`;
   }
   document.getElementById('shareTitle').innerHTML = globalFile;
   document.getElementById('shareLinkInput').value = globalFileLink;

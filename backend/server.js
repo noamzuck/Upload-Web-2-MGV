@@ -42,7 +42,7 @@ app.post('/file', upload.single('file'), async (req, res) => {
     const file = req.file, id = req.body.id;
     if(!id || !file) return res.status(400).send('Not enough data provided.');
 
-    const finalName = encodeURIComponent(file.originalname).replaceAll('%20', ' '); //Encodes the file name
+    const finalName = file.originalname;
 
     await fs.writeFileSync(path.join(__dirname + "/tmp/", finalName), file.buffer);
 
@@ -62,10 +62,10 @@ app.post('/file', upload.single('file'), async (req, res) => {
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
 
-    const result = await uploadFile(finalName, file.buffer, metaData, id, file.originalname);
+    const result = await uploadFile(finalName, file.buffer, metaData, id);
     
     if(result == "File already exists") res.status(400).send(result);
-    else res.send('Ok: ' + result);
+    else res.send(finalName);
 }); //Gets the post request to upload a file
 
 app.delete('/filename/:file/:id', async (req, res) => {
@@ -76,7 +76,7 @@ app.delete('/filename/:file/:id', async (req, res) => {
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
     else newId = new ObjectId(id);
 
-    const finalName = encodeURIComponent(file).replaceAll('%20', ' ');
+    const finalName = encodeURIComponent(file);
 
     await minioClient.removeObjects(id, [finalName])
     .catch(err => res.send(err));
@@ -86,7 +86,7 @@ app.delete('/filename/:file/:id', async (req, res) => {
         const db = await client.db('UploadFilesMGV');
         collection = await db.collection('users');
 
-        collection.findOneAndUpdate({ _id: new ObjectId(id) }, { $pull: { files: file } })
+        collection.findOneAndUpdate({ _id: new ObjectId(id) }, { $pull: { files: finalName } })
         .catch(() => 'Internal Server Error');
     })
     .catch(() => 'Error connecting to MongoDB');
@@ -123,7 +123,7 @@ app.get('/getFile/:id/:file', async (req, res) => {
     
     if (!ObjectId.isValid(id)) return res.send('Invalid ObjectId');
 
-    const finalName = encodeURIComponent(file).replaceAll('%20', ' ');
+    const finalName = encodeURIComponent(file);
     
     await minioClient.getObject(id, finalName)
     .then((stream) => stream.pipe(res))
@@ -199,7 +199,7 @@ app.listen(port, () => {
 /*FUNCTIONS*/
 /***********/
 
-async function uploadFile(name, buffer, metaData, id, originalname) {
+async function uploadFile(name, buffer, metaData, id) {
     return await MongoClient.connect(mongoUrl)
     .then(async client => {
         const db = await client.db('UploadFilesMGV');
@@ -216,7 +216,7 @@ async function uploadFile(name, buffer, metaData, id, originalname) {
                         if (result) {
                             result._id = new ObjectId(id);
                             const tmp = { $set: JSON.parse(JSON.stringify(result)) };
-                            tmp.$set.files.push(originalname);
+                            tmp.$set.files.push(name);
                             delete tmp.$set._id;
                             return await collection.updateOne(result, tmp)
                             .then(resultUpdate => {
