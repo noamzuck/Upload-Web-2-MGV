@@ -6,6 +6,7 @@ To get started with this project, follow these steps:
 
 ```bash
 git clone https://github.com/noamzuck/Upload-Web-2-MGV.git
+```
 
 ### Step 2: Navigate to the Project Directory
 
