@@ -21,7 +21,7 @@ docker-compose up --build
 ```
 
 ### Step 5: Access the Application
-Once the containers are up and running, you can access the application by navigating to http://localhost:3000 in your web browser.
+Once the containers are up and running, check the logs of the server container and make sure all the npm packages were installed and the server running on port 3000. After that, you can access the application by navigating to http://localhost:3000 in your web browser.
 
 ### Step 6: Shut Down the Containers
 
