@@ -11,7 +11,7 @@ git clone https://github.com/noamzuck/Upload-Web-2-MGV.git
 ### Step 2: Navigate to the Project Directory
 
 ```bash
-cd your-project
+cd Upload-Web-2-MGV
 ```
 
 ### Step 4: Build and Start Docker Containers
