@@ -7,11 +7,12 @@ let aborted = false;
 
 //Waits till the page is loaded
 window.addEventListener('load', async () => {
+    //Checks if an account is already existing
     if(await localStorage.getItem('UploadFilesMGVId') == null) {
         await fetch('/createAccount')
         .then(res => res.json())
         .then(json => localStorage.setItem('UploadFilesMGVId', json.insertedId));
-    }//Checks if an account is already existing
+    }
     UploadFilesMGVId = await localStorage.getItem('UploadFilesMGVId');
 
     //Gets the user's information
@@ -19,6 +20,7 @@ window.addEventListener('load', async () => {
     .then(res => res.json())
     .then(json => {
         const doneDiv = document.getElementById('doneDiv');
+        //Creates an item for each file
         for(let file of json.files) {
             uploaded++;
             document.getElementById("filesStatusMenu").innerHTML = `Uploaded files: ${uploaded} || Uploading: ${uploading} || Failed: ${failedUps}`;
@@ -50,16 +52,17 @@ window.addEventListener('load', async () => {
             uploadItem.innerHTML = insideUploadItem;
             document.getElementById(`${time}Delete`).onclick = () => deleteFile(file, encodeId + time + 'Item');
             document.getElementById(`${time}Share`).onclick = () => shareFile(file, file);
-        }//Creates an item for each file
+        }
     })
     .catch(async err => {
+        //Checks for errors to see if the account ID is existing
         if(err == `SyntaxError: Unexpected token 'U', "User not found" is not valid JSON`) {
             await fetch('/createAccount')
             .then(res => res.json())
             .then(json => localStorage.setItem('UploadFilesMGVId', json.insertedId));
             UploadFilesMGVId = await localStorage.getItem('UploadFilesMGVId');
             location.reload();
-        } //Checks for errors to see if the account ID is existing
+        }
     });
 
     if(document.getElementById("statsDivOne") != null) await getStats();

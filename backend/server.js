@@ -24,20 +24,24 @@ const minioClient = new Minio.Client({
 
 app.use('/src', express.static(path.join(__dirname + '/../frontend/src'))); //gives you access to the "src" folder
 
+//Gives you access to the "manifest.json" file
 app.get('/manifest.json', function (req, res) {
     res.sendFile(path.join(__dirname + '/../frontend/public/manifest.json'));
-}); //Gives you access to the "manifest.json" file
+});
 
 app.get('/port', (req, res) => res.json({ port: port })); //Gives the port
 
+//Gives you access to the main page
 app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname + '/../frontend/public/index.html'));
-}); //Gives you access to the main page
+});
 
+//Gives you access to the stats page
 app.get('/stats', function (req, res) {
     res.sendFile(path.join(__dirname + '/../frontend/public/stats.html'));
-}); //Gives you access to the stats page
+});
 
+//Gets the post request to upload a file
 app.post('/file', upload.single('file'), async (req, res) => {
     const file = req.file, id = req.body.id;
     if(!id || !file) return res.status(400).send('Not enough data provided.');
@@ -66,8 +70,9 @@ app.post('/file', upload.single('file'), async (req, res) => {
     
     if(result == "File already exists") res.status(400).send(result);
     else res.send(finalName);
-}); //Gets the post request to upload a file
+});
 
+//Gets the delete request to delete a file
 app.delete('/filename/:file/:id', async (req, res) => {
     const { file, id } = req.params;
     if(!id || !file) return res.status(400).send('Not enough data provided.');
@@ -92,8 +97,9 @@ app.delete('/filename/:file/:id', async (req, res) => {
     .catch(() => 'Error connecting to MongoDB');
 
     res.send('File deleted successfully.');
-}); //Gets the delete request to delete a file
+});
 
+//Sends the statistics data
 app.get('/statistics', async (req, res) => {
     const { id } = req.query;
     if(!id) return res.status(400).send('No id provided.');
@@ -115,8 +121,9 @@ app.get('/statistics', async (req, res) => {
         .catch(() => res.status(500).send('Internal Server Error'));
     })
     .catch(error => res.send('Error connecting to MongoDB: ' + error));
-}); //Sends the statistics data
+});
 
+//Sends the link to download the file
 app.get('/getFile/:id/:file', async (req, res) => {
     const { id, file } = req.params;
     if(!id || !file) return res.status(400).send('Not enough data provided.');
@@ -128,8 +135,9 @@ app.get('/getFile/:id/:file', async (req, res) => {
     await minioClient.getObject(id, finalName)
     .then((stream) => stream.pipe(res))
     .catch((err) => res.status(500).send('Error downloading file: ' + err));
-}); //Sends the link to download the file
+});
 
+//Sends the user information
 app.get('/getUser', async (req, res) => {
     const { id } = req.query;
     if(!id) return res.status(400).send('No id provided.');
@@ -149,8 +157,9 @@ app.get('/getUser', async (req, res) => {
         .catch(() => res.status(500).send('Internal Server Error'));
     })
     .catch(error => res.send('Error connecting to MongoDB: ' + error));
-}); //Sends the user information
+});
 
+//Creates a new user account
 app.get('/createAccount', async (req, res) => {
     await MongoClient.connect(mongoUrl)
     .then(async client => {
@@ -164,8 +173,9 @@ app.get('/createAccount', async (req, res) => {
         res.json(newUser);
     })
     .catch(error => res.send('Error connecting to MongoDB: ' + error));
-}); //Creates a new user account
+});
 
+//Adds data to a user's statistics 
 app.get('/addStat', async (req, res) => {
     const { id, time, fileType, date } = req.query;
     if(!id || !time || !fileType || !date || !req.query.size) return res.status(400).send('Not enough data provided.');
@@ -188,17 +198,19 @@ app.get('/addStat', async (req, res) => {
         .catch((err) => res.status(500).send('Internal Server Error' + err));
     })
     .catch(error => res.send('Error connecting to MongoDB: ' + error));
-}); //Adds data to a user's statistics 
+});
 
+//Runs the server on port ${port}
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-}); //Runs the server on port ${port}
+});
 
 
 /***********/
 /*FUNCTIONS*/
 /***********/
 
+//A function to upload a file
 async function uploadFile(name, buffer, metaData, id) {
     return await MongoClient.connect(mongoUrl)
     .then(async client => {
@@ -233,11 +245,12 @@ async function uploadFile(name, buffer, metaData, id) {
         });
     })
     .catch(() => 'Error connecting to MongoDB');
-} //A function to upload a file
+}
 
+//A function to create the user's bucket
 async function createTheMainBucket(id) {
     return await minioClient.makeBucket(id, async (err) => {
         if(err) return err;
         return 'Bucket set successfully';
     });
-} //A function to create the user's bucket
+}
