@@ -1,9 +1,11 @@
 let uploaded = 0, uploading = 0, failedUps = 0; //The variables for the upload process
 let UploadFilesMGVId, globalFile, globalFileLink, port; //The global variables
+let aborted = false;
 (async () => {
   await fetch('/port').then(res => res.json()).then(json => port = json.port);
 })();
 
+//Waits till the page is loaded
 window.addEventListener('load', async () => {
     if(await localStorage.getItem('UploadFilesMGVId') == null) {
         await fetch('/createAccount')
@@ -24,7 +26,7 @@ window.addEventListener('load', async () => {
             //Updates the progress of the uploads
 
             const time = Date.now();
-            const encodeId = encodeURIComponent(file).replace(/[^a-zA-Z0-9]/g, '');
+            const encodeId = encodeURIComponent(file).replaceAll(/[^a-zA-Z0-9]/g, '');
             const uploadItem = document.createElement('div');
             uploadItem.id = encodeId + time + 'Item';
             uploadItem.classList.add('uploadItem');
@@ -59,54 +61,59 @@ window.addEventListener('load', async () => {
     });
 
     if(document.getElementById("statsDivOne") != null) await getStats();
-}); //Waits till the page is loaded
+});
 
+//The function that is called when the user drags a file
 function drag(event) {
     event.preventDefault();
     event.currentTarget.classList.add('dropDiv');
-} //The function that is called when the user drags a file
+}
 
+//The function that is called when the user cancels the drag
 function cancelDraging(event) {
     event.currentTarget.classList.remove('dropDiv');
-} //The function that is called when the user cancels the drag
+}
 
+//The function that is called when the user drops a file
 function drop(event) {
     event.preventDefault();
     event.currentTarget.classList.remove('dropDiv');
 
     const files = event.dataTransfer.files;
     uploadFiles(files);
-} //The function that is called when the user drops a file
+}
 
+//The function that is called when the user put the mouse over the menu button
 function toggleIcon() {
     document.getElementById('arrowI').classList.toggle('arrowIconHover');
-} //The function that is called when the user put the mouse over the menu button
+}
 
+//The function that is called when the user clicks on the menu button
 function menu() {
     const menu = document.getElementById('sideUploads');
     menu.style.display = (menu.style.display == 'flex') ? 'none' : 'flex';
     menu.classList.toggle('sideUploadsDivLeave');
     document.getElementById('arrowI').classList.toggle('fa-angle-left');
     document.getElementById('arrowI').classList.toggle('fa-angle-right');
-} //The function that is called when the user clicks on the menu button
+}
 
+//The function that is called when the user wants to upload files
 async function uploadFiles(files) {
     const uploadingDiv = document.getElementById('uploadingDiv');
     const doneDiv = document.getElementById('doneDiv');
     for(let file of files) {
+        //Updates the progress of the uploads
         uploading++;
         document.getElementById("filesStatusMenu").innerHTML = `Uploaded files: ${uploaded} || Uploading: ${uploading} || Failed: ${failedUps}`;
         document.getElementById('uploadHistory').innerHTML++;
-        //Updates the progress of the uploads
 
+        //Creates a new item in the menu
         const time = Date.now();
-        const encodeId = encodeURIComponent(file.name).replace(/[^a-zA-Z0-9]/g, '');
+        const encodeId = encodeURIComponent(file.name).replaceAll(/[^a-zA-Z0-9]/g, '');
         const uploadItem = document.createElement('div');
         uploadItem.id = encodeId + time + 'Item';
         uploadItem.classList.add('uploadItem');
         uploadingDiv.appendChild(uploadItem);
-        const controller = new AbortController();
-        const signal = controller.signal;
         const insideUploadItem = `\
             <button id='${encodeId}${time}Btn' class='uploadCancelBtn'>\
                 <i class='fa-solid fa-xmark'></i>\
@@ -120,103 +127,105 @@ async function uploadFiles(files) {
         `;
         uploadItem.innerHTML = insideUploadItem;
         document.getElementById(encodeId + time + 'Btn').onclick = async () => {
-            controller.abort();
+            aborted = true;
+            xhr.abort();
             uploadItem.classList.toggle('uploadItemRemove');
             await new Promise(r => setTimeout(r, 300));
             uploadItem.remove();
         };
-        //Creates a new item in the menu
+        
+        const startTime = performance.now();
 
         const formData = new FormData();
         formData.append('file', file);
         formData.append('id', UploadFilesMGVId);
+        const xhr = new window.XMLHttpRequest();
 
-        await fetch('/file', {
-            method: 'POST',
-            body: formData,
-            signal: signal
-        })//Sends the file to the server
-        .then(res => {
-            if(!res.ok) throw new Error('Network response was not ok');
-        })//Checks for errors
-        .then(() => {
-            const startTime = performance.now();
-            const reader = new FileReader();
+        //Sends the file to the server
+        $.ajax({
+            url: '/file',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhr: function() {
+                //What to do when the upload is in progress
+                xhr.upload.addEventListener("progress", (event) => updateProgress(event, encodeId + time), false);
+                return xhr;
+            },
+            //When the file is uploaded
+            success: async function(response) {
+              //Updates the progress of the uploads
+              uploaded++;
+              uploading--;
+              document.getElementById("filesStatusMenu").innerHTML = `Uploaded files: ${uploaded} || Uploading: ${uploading} || Failed: ${failedUps}`;
 
-            reader.onprogress = (event) => updateProgress(event, file.name + time);
-            //What to do when the upload is in progress
+              //Removes the progress bar from the item
+              document.getElementById(encodeId + time + 'ContBar').remove();
+  
+              //Creates the action buttons in the item
+              const uploadBtnsDiv = document.createElement('div');
+              uploadBtnsDiv.classList.add('uploadBtnsDiv');
+              uploadBtnsDiv.innerHTML = `\
+                <button class='uploadDeleteAndShareBtn deleteBtnFix' onclick="deleteFile('${file.name}', '${encodeId + time + 'Item'}')">\
+                    Delete file
+                    <i class="fa fa-trash" style='margin: 0 0.5vw;'></i>
+                </button>\
+                <button class='uploadDeleteAndShareBtn shareBtnFix' onclick="shareFile('${file.name}')">\
+                    Share file
+                    <i class="fa-solid fa-share" style='margin: 0 0.5vw;'></i>
+                </button>`;
+              document.getElementById(encodeId + time + 'Item').appendChild(uploadBtnsDiv);
+  
+              //Updates some data in the item
+              document.getElementById(encodeId + time + 'Btn').innerHTML = "<i class='fa-solid fa-check'></i>";
+              document.getElementById(encodeId + time + 'Btn').style.backgroundColor = 'var(--b)';
+              document.getElementById(encodeId + time + 'Btn').style.cursor = "default";
+              document.getElementById(encodeId + time + 'Btn').onclick = "";
+  
+              //Moves the item to the done div
+              doneDiv.insertBefore(document.getElementById(encodeId + time + 'Item'), doneDiv.firstChild);
+  
+              //Sends the stats to the server
+              const endTime = performance.now();
+              const duration = parseInt(endTime - startTime);
+              await fetch(`/addStat?id=${UploadFilesMGVId}&time=${duration}&size=${file.size}&fileType=${(file.name).split('.')[(file.name).split('.').length - 1]}&date=${(new Date().toLocaleDateString())}`);
+            },
+            //Catches the failed uploads
+            error: function() {
+              //Checks if the error is due to a cancellation by the user
+              if(!aborted) {
+                  alert("Uploading the file failed (may be because a file with the same name already exists)");
+                  failedUps++;
 
-            reader.onload = async () => {
-                uploaded++;
-                uploading--;
-                document.getElementById(encodeId + time + 'ContBar').remove();
-                //Removes the progress bar from the item
-
-                const uploadBtnsDiv = document.createElement('div');
-                uploadBtnsDiv.classList.add('uploadBtnsDiv');
-                uploadBtnsDiv.innerHTML = `\
-                  <button class='uploadDeleteAndShareBtn deleteBtnFix' onclick="deleteFile('${file.name}', '${encodeId + time + 'Item'}')">\
-                      Delete file
-                      <i class="fa fa-trash" style='margin: 0 0.5vw;'></i>
-                  </button>\
-                  <button class='uploadDeleteAndShareBtn shareBtnFix' onclick="shareFile('${file.name}')">\
-                      Share file
-                      <i class="fa-solid fa-share" style='margin: 0 0.5vw;'></i>
-                  </button>`;
-                document.getElementById(encodeId + time + 'Item').appendChild(uploadBtnsDiv);
-                //Creates the action buttons in the item
-
-                document.getElementById(encodeId + time + 'Btn').innerHTML = "<i class='fa-solid fa-check'></i>";
-                document.getElementById(encodeId + time + 'Btn').style.backgroundColor = 'var(--b)';
-                document.getElementById(encodeId + time + 'Btn').style.cursor = "default";
-                document.getElementById(encodeId + time + 'Btn').onclick = "";
-                //Updates some data in the item
-
-                doneDiv.insertBefore(document.getElementById(encodeId + time + 'Item'), doneDiv.firstChild);
-                //Moves the item to the done div
-
-                document.getElementById("filesStatusMenu").innerHTML = `Uploaded files: ${uploaded} || Uploading: ${uploading} || Failed: ${failedUps}`;
-                //Updates the progress of the uploads
-
-                const endTime = performance.now();
-                const duration = parseInt(endTime - startTime);
-                await fetch(`/addStat?id=${UploadFilesMGVId}&time=${duration}&size=${file.size}&fileType=${(file.name).split('.')[(file.name).split('.').length - 1]}&date=${(new Date().toLocaleDateString())}`);
-                //Sends the stats to the server
-            };
-            //What to do when the upload is finished
-            
-            reader.readAsDataURL(file);
-        })//When the file is uploaded
-        .catch(err => {
-            if(err != "AbortError: The user aborted a request.") {//Checks if the error is due to a cancellation by the user
-                alert("Uploading the file failed (may be because a file with the same name already exists)");
-                failedUps++;
-                uploadItem.style.paddingBottom = 0;
-                uploadItem.style.outlineColor = 'rgb(189, 0, 0)';
-                document.getElementById(encodeId + time + 'Title').style.color = 'rgb(189, 0, 0)';
-                document.getElementById(encodeId + time + 'ContBar').className = "uploadBarErrorItem";
-                document.getElementById(encodeId + time + 'ContBar').innerHTML = "Upload failed";
-                doneDiv.insertBefore(document.getElementById(encodeId + time + 'Item'), doneDiv.firstChild);
-                //Updates some data in the item and moves the item to the done div
+                  //Updates some data in the item and moves the item to the done div
+                  uploadItem.style.paddingBottom = 0;
+                  uploadItem.style.outlineColor = 'rgb(189, 0, 0)';
+                  document.getElementById(encodeId + time + 'Title').style.color = 'rgb(189, 0, 0)';
+                  document.getElementById(encodeId + time + 'ContBar').className = "uploadBarErrorItem";
+                  document.getElementById(encodeId + time + 'ContBar').innerHTML = "Upload failed";
+                  doneDiv.insertBefore(document.getElementById(encodeId + time + 'Item'), doneDiv.firstChild);
+              } else aborted = false;
+  
+              //Updates the progress of the uploads
+              uploading--;
+              document.getElementById('uploadHistory').innerHTML--;
+              document.getElementById("filesStatusMenu").innerHTML = `Uploaded files: ${uploaded} || Uploading: ${uploading} || Failed: ${failedUps}`;
             }
-
-            uploading--;
-            document.getElementById('uploadHistory').innerHTML--;
-            document.getElementById("filesStatusMenu").innerHTML = `Uploaded files: ${uploaded} || Uploading: ${uploading} || Failed: ${failedUps}`;
-            //Updates the progress of the uploads
         });
-        //Catches the failed uploads
     }
-} //The function that is called when the user wants to upload files
+}
 
+//The function that is called when the upload is in progress
 function updateProgress(event, id) {
   if (event.lengthComputable && document.getElementById(id + 'P') != null) {
-    const percentComplete = (event.loaded / event.total) * 100;
-    document.getElementById(id + 'P').innerHTML = ((percentComplete == null) ? 100 : ((percentComplete.toFixed(2) == 100.00) ? 100 : percentComplete.toFixed(2))) + '%';
-    document.getElementById(id + 'Bar').style.width = percentComplete + '%';
+      const percentComplete = (event.loaded / event.total) * 100;
+      document.getElementById(id + 'P').innerHTML = ((percentComplete == null) ? 100 : ((percentComplete.toFixed(2) == 100.00) ? 100 : percentComplete.toFixed(2))) + '%';
+      document.getElementById(id + 'Bar').style.width = percentComplete + '%';
   }
-} //The function that is called when the upload is in progress
+}
 
+//The function that is called when the user wants to delete a file
 async function deleteFile(file, itemId) {
     const item = document.getElementById(itemId);
 
@@ -235,8 +244,9 @@ async function deleteFile(file, itemId) {
     .catch(err => {
         console.error(err);
     });
-} //The function that is called when the user wants to delete a file
+}
 
+//The function that is called when the user clicks on the sharing button
 async function shareFile(file) {
   if(globalFile != file) {
     globalFile = file;
@@ -245,16 +255,18 @@ async function shareFile(file) {
   document.getElementById('shareTitle').innerHTML = globalFile;
   document.getElementById('shareLinkInput').value = globalFileLink;
   document.getElementById('shareBox').classList.toggle('shareBoxOut');
-} //The function that is called when the user clicks on the sharing button
+}
 
+//The function that is called when the user wants to share a file
 async function shareFileAction() {
   await navigator.share({
     title: globalFile,
     text: `You got a link to the file ${globalFile}`,
     url: globalFileLink
   });
-} //The function that is called when the user wants to share a file
+}
 
+//The function that is called when the user wants to get the statistics
 async function getStats() {
     await fetch('/statistics?id=' + UploadFilesMGVId)
     .then(res => res.json())
@@ -317,4 +329,4 @@ async function getStats() {
           }
         });
     });
-} //The function that is called when the user wants to get the statistics
+}

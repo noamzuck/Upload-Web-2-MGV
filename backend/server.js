@@ -220,7 +220,7 @@ async function uploadFile(name, buffer, metaData, id, originalname) {
                             delete tmp.$set._id;
                             return await collection.updateOne(result, tmp)
                             .then(resultUpdate => {
-                                if (resultUpdate.modifiedCount === 1) return 'User updated successfully';
+                                if (resultUpdate.modifiedCount === 1) return 'Updates successfully';
                                 else return 'User not found';
                             })
                             .catch(() => 'Internal Server Error');
