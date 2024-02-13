@@ -12,11 +12,13 @@ git clone https://github.com/noamzuck/Upload-Web-2-MGV.git
 
 ```bash
 cd your-project
+```
 
 ### Step 4: Build and Start Docker Containers
 
 ```bash
 docker-compose up --build
+```
 
 ### Step 5: Access the Application
 Once the containers are up and running, you can access the application by navigating to http://localhost:3000 in your web browser.
@@ -25,3 +27,4 @@ Once the containers are up and running, you can access the application by naviga
 
 ```bash
 docker-compose down
+```
